@@ -1,0 +1,35 @@
+%dw 2.0
+
+type auto_5233fcce_b1b3_4666_ab84_ea6dd84e22ac_Output_Payload = {|
+  author?: { _?: java_lang_Object }, 
+  checkInComment?: String, 
+  checkOutType?: String, 
+  checkedOutByUser?: { _?: java_lang_Object }, 
+  contentTag?: String, 
+  customizedPageStatus?: String, 
+  eTag?: String, 
+  exists?: Boolean {"typeId": "java.lang.Boolean"}, 
+  length?: Number, 
+  level?: Number, 
+  linkingUrl?: String, 
+  listItemAllFields?: { _?: java_lang_Object }, 
+  lockedByUser?: { _?: java_lang_Object }, 
+  majorVersion?: Number, 
+  metadata?: { _?: java_lang_Object }, 
+  minorVersion?: Number, 
+  modifiedBy?: { _?: java_lang_Object }, 
+  name?: String, 
+  serverRelativeUrl?: String, 
+  timeCreated?: String, 
+  timeLastModified?: String, 
+  title?: String, 
+  uIVersion?: Number, 
+  uIVersionLabel?: String, 
+  uniqueId?: String, 
+  versions?: { _?: java_lang_Object }
+|} {"typeAlias": "SharepointFile",
+"typeId": "com.mulesoft.connectors.sharepoint.api.output.SharepointFile"}
+type java_lang_Object = java_lang_Object
+
+
+

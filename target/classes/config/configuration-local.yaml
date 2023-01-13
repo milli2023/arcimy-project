@@ -1,0 +1,62 @@
+environment: 
+  id: "b4cb94ec-d937-4d2c-8199-7b80472e23db"
+
+cloudhub:
+  username: arc_anypoint
+  password: "![lcZfTE/RzZO2y6mv7Q2xWIxZVs+Xz5uOj6jRbC3I4LY=]"
+  
+keystore:
+  path: "keys/keystore-dev.pkcs12"
+  keypassword: "![tjxchA7SwKY9KUaipsZKng==]"
+  password: "![tjxchA7SwKY9KUaipsZKng==]"
+  
+sharepoint:
+  username: "milli.ketera@redcross.org"
+  password: "![F/6rrA9DgvCYQGyxQbpvFw==]"
+  siteurl: "https://americanredcross.sharepoint.com"
+  
+
+salesforce:
+  host: "test.salesforce.com"
+  port: "443"
+  token.endpoint: "/services/oauth2/token"
+  token.url: "https://test.salesforce.com/services/oauth2/token"
+  consumerkey: "![gxJk4VTyVYWGjmsmomwIy/5GDC+XrZguFvSEa6qx0FfI2xYuYhb4dCkUVFjlwJgXVAWgxkP2BLd2nmJ12tfGSTLQSUiMKiZpyFOSKylBqkOxTQVXWvqvNUUNilPW9ggB]"
+  consumersecret: "![GU3SigM0e4vvUxUm+VN71WUKnuVUiRJb1MFaLTbKfBavm1V66mpoBcIxrsNIfpioJ/bVK14/ww2tn/A4EZqqHz8unFzbVNSH6D0qpEYLRF8=]"
+  username: "mulesoftapi@redcross.org.test"
+  password: "![sTPoPsQn6rt/PuqtQGowjA==]"
+  securitytoken: "![wjrQHApM3BgyI1xUYi+HsFOxPdF1y/YvGLLz3al5M1c=]"
+    
+
+ecom.sftp:
+  env: "dev"
+  host: "sftpphsscfsprd.redcross.org"
+  port: "22"
+  username : "phssecom_cfs_sftp_usr_prd"
+  password: "ZC1M7yYf"
+  outDirectory: "out/"
+  
+ts.sftp:
+  env: "dev"
+  host: "sftpphsscfsprd.redcross.org"
+  hostec: "sftpphsscfsprd.redcross.org"
+  port: "22"
+  username: "phss_sf_cfs_sftp_usr_prd"
+  usernameec : "phssecom_cfs_sftp_usr_prd"
+  password: "nyNUfr5Y"
+  passwordec: "ZC1M7yYf"
+  outDirectory: "out/"  
+
+rco.subdirectories:
+  ARC_Master: "ARCMaster/"
+  ARC_Invent: "ARCInventory/"
+  ARC_LMS_Ma: "ARCMaster/"
+  ARC_Locati: "ARCStore/"
+  ARC_Priceb: "ARCPriceBook/"
+  ARC_Site_C: "ARCSite/"
+  
+
+  
+
+  
+

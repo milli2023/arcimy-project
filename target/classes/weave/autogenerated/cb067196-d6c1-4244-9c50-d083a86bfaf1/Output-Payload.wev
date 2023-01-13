@@ -1,0 +1,67 @@
+%dw 2.0
+
+type auto_cb067196_d6c1_4244_9c50_d083a86bfaf1_Output_Payload = {|
+  author?: { _?: java_lang_Object }, 
+  checkInComment?: String, 
+  checkOutType?: String, 
+  checkedOutByUser?: { _?: java_lang_Object_4 }, 
+  contentTag?: String, 
+  customizedPageStatus?: String, 
+  eTag?: String, 
+  exists?: Boolean {"typeId": "java.lang.Boolean"}, 
+  length?: Number, 
+  level?: Number, 
+  linkingUrl?: String, 
+  listItemAllFields?: { _?: java_lang_Object_12 }, 
+  lockedByUser?: { _?: java_lang_Object_14 }, 
+  majorVersion?: Number, 
+  metadata?: { _?: java_lang_Object_17 }, 
+  minorVersion?: Number, 
+  modifiedBy?: { _?: java_lang_Object_20 }, 
+  name?: String, 
+  serverRelativeUrl?: String, 
+  timeCreated?: String, 
+  timeLastModified?: String, 
+  title?: String, 
+  uIVersion?: Number, 
+  uIVersionLabel?: String, 
+  uniqueId?: String, 
+  versions?: { _?: java_lang_Object_30 }
+|} {"typeAlias": "SharepointFile",
+"typeId": "com.mulesoft.connectors.sharepoint.api.output.SharepointFile"}
+type java_lang_Object_4 = {|  |} {"typeAlias": "Object",
+"class": "java.lang.Object",
+"typeId": "java.lang.Object"}
+
+
+type java_lang_Object_12 = {|  |} {"typeAlias": "Object",
+"class": "java.lang.Object",
+"typeId": "java.lang.Object"}
+
+
+type java_lang_Object_30 = {|  |} {"typeAlias": "Object",
+"class": "java.lang.Object",
+"typeId": "java.lang.Object"}
+
+
+type java_lang_Object_17 = {|  |} {"typeAlias": "Object",
+"class": "java.lang.Object",
+"typeId": "java.lang.Object"}
+
+
+type java_lang_Object = {|  |} {"typeAlias": "Object",
+"class": "java.lang.Object",
+"typeId": "java.lang.Object"}
+
+
+type java_lang_Object_20 = {|  |} {"typeAlias": "Object",
+"class": "java.lang.Object",
+"typeId": "java.lang.Object"}
+
+
+type java_lang_Object_14 = {|  |} {"typeAlias": "Object",
+"class": "java.lang.Object",
+"typeId": "java.lang.Object"}
+
+
+

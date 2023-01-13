@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="tsord-tsaraging-mainflow" doc:id="52382dab-7d7e-4d92-9f43-3ea67b4911d2" >
+		<scheduler doc:name="Scheduler" doc:id="74f119ca-605d-4854-b2df-36d22de74c13" >
+			<scheduling-strategy >
+				<cron expression="${workflow.scheduler.ts.interval}" timeZone="${workflow.scheduler.ts.timezone}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="start tsord flow" doc:id="5b4a41df-5d8d-43bc-aaa4-9ce466a9f30e" message="start tsord flow #[payload]" />
+		<flow-ref doc:name="sftp-sfdc-TSORD-flow" doc:id="343587dd-04e9-4156-bbb0-c8424be1d5ed" name="sftp-sfdc-TSORD-flow"/>
+		<logger level="INFO" doc:name="end of tsord and start tsaraging flow" doc:id="a0f93fb7-c558-4261-abdd-faec76ccf106" message="end of tsord and start tsaraging flow #[payload]" />
+		<flow-ref doc:name="sftp-sfdc-TSARAging-flow" doc:id="caf963ec-ccaa-480a-ac4a-f4bcd96109db" name="sftp-sfdc-TSARAging-flow"/>
+		<logger level="INFO" doc:name="end of tsaraging flow" doc:id="7a5802c1-d0f9-41b1-9d0b-93b81d7ebb73" message="end of tsaraging flow #[payload]" />
+	</flow>
+	<flow name="ecomaraging-mainflow" doc:id="b4918781-ce27-43d4-b62f-11e5c4f1bc5e" >
+		<scheduler doc:name="Scheduler" doc:id="a3726158-1077-427f-80b8-1fdb85703203" >
+			<scheduling-strategy >
+				<cron expression="${workflow.scheduler.ecom.interval}" timeZone="${workflow.scheduler.ecom.timezone}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="start ecom flow " doc:id="deee1f08-aa02-47d9-b19a-149b9882b952" message="start ecom flow  #[payload]" />
+		<flow-ref doc:name="sftp-sfdc-ECOMARAging-flow" doc:id="aff14148-9312-4672-a009-02d3926bbce2" name="sftp-sfdc-ECOMARAging-flow"/>
+		<logger level="INFO" doc:name="end of flow" doc:id="f819247a-5c66-4c3e-bf0e-7483fd0e1f4c" />
+	</flow>
+	<sub-flow name="successNotificationEmail" doc:id="5233fcce-b1b3-4666-ab84-ea6dd84e22ac" >
+		<logger level="INFO" doc:name="before success email" doc:id="10929c28-6d08-4dd8-8b9b-acf5bc163532" message="before success email #[payload]"/>
+		<ee:transform doc:name="prepare succes email" doc:id="7010fcb0-3527-4dcd-a21a-2c45ef24c0d2">
+					<ee:message />
+					<ee:variables>
+				<ee:set-variable variableName="emails" ><![CDATA[	 %dw 2.0
+output application/json
+---
+{
+	Priority: "Success", 
+	source: app.name,
+	severity: p('smtpemail.severity2'),
+	id: correlationId as String default app.name ++ now(),
+	Component: vars.flowName,
+	TimeStamp: '@' ++ now()
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+		<email:send doc:name="successEmailNotification " doc:id="fbb88e83-c4b2-4935-85e3-f1816540ee92" config-ref="AWS_Email_SMTP" fromAddress="arc_phss@redcross.org" subject="${smtpemail.subject2}" toAddresses="#[(p('workflow.salesforce-ar-aging.email.distribution')) splitBy(&quot;,&quot;)]" >
+			<reconnect frequency="3000" count="3" />
+			<email:body contentType="text/html" >
+				<email:content ><![CDATA[<p>
+
+<h3> SFTP file successfully posted on SFDC and SharePoint </h3> 
+<br/>
+<i> for detail error information see the attachment </i>
+</p>]]></email:content>
+			</email:body>
+			<email:attachments ><![CDATA[#[{'successEmailDetail': vars.emails}]]]></email:attachments>
+		</email:send>
+		<logger level="INFO" doc:name="after success email" doc:id="c0f83089-df60-4a7f-9459-03b0ffee601e" message="before success email #[payload]"/>
+	</sub-flow>
+	<sub-flow name="sendEmailForNotMatchedRecords" doc:id="e070bcf2-d53e-4c9a-ba80-558433d1de69" >
+		<choice doc:name="Choice" doc:id="a2646da2-7034-4f65-928f-5c49f1525de1" >
+			<when expression="#[sizeOf(vars.notMatched) &gt;0]">
+				<ee:transform doc:name="prepare notmatched email" doc:id="5e05fab2-759b-4823-89ff-1bb24e337b65">
+			<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.notMatched]]></ee:set-payload>
+					</ee:message>
+			<ee:variables>
+						<ee:set-variable variableName="emailnm" ><![CDATA[	 %dw 2.0
+output application/json
+---
+{
+	Priority: "NotMatchNotification", 
+	source: app.name,
+	severity: p('smtpemail.severity1'),
+	id: correlationId as String default app.name ++ now(),
+	Component: attributes.fileName,
+	TimeStamp: '@' ++ now()
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<email:send doc:name="not matched record notification " doc:id="bb878ead-5730-4b94-b9f2-383153f07e83" config-ref="AWS_Email_SMTP" fromAddress='arc_phss@redcross.org' subject="${smtpemail.subject1}" toAddresses="#[(p('workflow.salesforce-ar-aging.email.distribution')) splitBy(&quot;,&quot;)]">
+						<reconnect frequency="3000" count="3" />
+					<email:body contentType="text/html">
+						<email:content ><![CDATA[#[{'notMatchedRecordsDetail': vars.emailnm}]]]></email:content>
+								</email:body>
+					<email:attachments ><![CDATA[#[%dw 2.0
+output application/json
+---
+{'notMatchedRecords': payload}]]]></email:attachments>
+					
+</email:send>
+			
+</when>
+		</choice>
+	</sub-flow> 
+</mule>

@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_cb067196_d6c1_4244_9c50_d083a86bfaf1_Output_Variables_tsordRecord = Binary
+

@@ -1,0 +1,11 @@
+%dw 2.0
+
+type auto_e7461364_53d6_48df_82f0_2d5acc4146b7_Output_Variables_retriveSFIDm1 = Array<Account>
+type Account = {|
+  Id?: String {"typeId": "Id"}, 
+  nk_billto_org_id__c?: String {"typeId": "nk_billto_org_id__c"}
+|} {"label": "Account",
+"typeId": "Account"}
+
+
+

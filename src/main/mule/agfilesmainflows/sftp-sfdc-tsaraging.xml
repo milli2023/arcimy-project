@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:sharepoint="http://www.mulesoft.org/schema/mule/sharepoint"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sharepoint http://www.mulesoft.org/schema/mule/sharepoint/current/mule-sharepoint.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	
+	
+	<flow name="sftp-sfdc-TSARAging-flow" doc:id="9e0bc111-0d11-4163-8c53-9f36bcdc9b6f" >
+		
+				<!-- <try doc:name="Try" doc:id="8c581bb9-286c-4366-83b4-8b1c207be1f4" >
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="0f690666-5207-4270-a6e0-0e21a2305276">
+					<logger level="INFO" doc:name="before sftp error notification" doc:id="395297f5-bd4f-4c1a-b11e-c653033d3edb" message="after sftp error notification #[payload]" />
+					<email:send doc:name="SFTP TSARAg file update Process Escalation" doc:id="bcd2ece2-5e0c-4b33-a892-f02ba98d328b" config-ref="AWS_Email_SMTP" fromAddress="arc_phss@redcross.org" subject="mulesoft  ${MULE_ENV} - SFTP TSARAging file read Process fail" toAddresses="#[(p('workflow.salesforce-ar-aging.email.distribution')) splitBy(&quot;,&quot;)]" >
+						<reconnect frequency="3000" count="3" />
+						<email:body contentType="text/html" />
+					</email:send>
+					<logger level="INFO" doc:name="after sftp error notification" doc:id="aa6c0cfd-cb2b-4823-b327-8777df22e949" message="after sftp error notification #[payload]" />
+				</on-error-propagate>
+			</error-handler>
+		</try> -->
+		<sftp:read doc:name="retrive-TSARAging-files" doc:id="63bd22e1-222e-4020-9f3f-13eba3f1f623" config-ref="TS_SFTP_Config" path="TSARAging-20220504123842.csv">
+			<reconnect frequency="3000" count="3" />
+		</sftp:read>
+		<logger level="INFO" doc:name="after sftp retrive " doc:id="3c6ae001-c7ec-4343-9ab4-cafcbdd5431c" message="ASARAgingfiles #[payload]" />
+		<set-variable value="#[payload]" doc:name="TSARAging-Records" doc:id="58361acc-5457-4bbe-b6ef-e4dc551580a8" variableName="TSARAgRecord"/>
+					<ee:transform doc:name="ForEachResponseAggregator" doc:id="04c5052d-8b3a-4b01-aee6-9a4da860f0ee" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="sfRequest" ><![CDATA[[]]]></ee:set-variable>
+				<ee:set-variable variableName="notMatched" ><![CDATA[[]]]></ee:set-variable>
+				<ee:set-variable variableName="flowName" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.fileName]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="286cea03-2a56-4cdd-8336-c3bad3e5e7b9" batchSize="4000">
+			<set-variable value="match1" doc:name="Set Variable" doc:id="be35f4c1-deca-4134-ae3b-6f9dc1316969" variableName="matchNumber"/>
+			<ee:transform doc:name="Transform Message" doc:id="eb14cf87-19a5-41e4-805e-6030df7c1dae" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+flatten(payload)]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<salesforce:query-all doc:name="match condition" doc:id="ba0966f6-dec0-4157-af78-f0bf5ee7e76d" config-ref="Salesforce_Config" target="retriveSFID">
+							<reconnect frequency="3000" count="3" />
+				<salesforce:salesforce-query><![CDATA[select Id,nk_billto_org_id__c from Account where nk_billto_org_id__c in (':sfaccnum1')]]></salesforce:salesforce-query>
+							<salesforce:parameters><![CDATA[#[%dw 2.0	
+output application/java
+---
+{
+	"sfaccnum1" : (payload filter(!isEmpty($."Account Identifier")))."Account Identifier" joinBy "','"
+}]]]></salesforce:parameters>
+						</salesforce:query-all>
+			<flow-ref doc:name="exract-matched-not-matched-records-sub-flow" doc:id="0ce91e6f-bcce-4d5a-b6cc-747cb8ebe404" name="exract-matched-not-matched-records-sub-flow" />
+			<choice doc:name="Choice" doc:id="455fa72f-d95b-4a01-914a-faa489074495">
+			<when expression="#[sizeOf(payload) &gt;0]">
+				<set-variable value="match2" doc:name="match2" doc:id="abca5278-d756-45eb-a8e2-112c47514c27" variableName="matchNumber" />
+				<salesforce:query-all doc:name="match condition 2" doc:id="95b9284d-b7f3-4877-918d-0470189de6b5" config-ref="Salesforce_Config" target="retriveSFID">
+					<reconnect frequency="3000" count="3" />
+						<salesforce:salesforce-query><![CDATA[select Id,SABA_LMS_Code__c from Account where SABA_LMS_Code__c in (':sfaccnum2')]]></salesforce:salesforce-query>
+					<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"sfaccnum2" : (payload filter(!isEmpty($."Saba/LMS Code")))."Saba/LMS Code" joinBy "','"
+}]]]></salesforce:parameters>
+				</salesforce:query-all>
+				<flow-ref doc:name="exract-matched-not-matched-records-sub-flow" doc:id="e1a0a0dd-3925-42a6-88d6-191d9f972c3c" name="exract-matched-not-matched-records-sub-flow" />
+			
+</when>
+					</choice>
+		</foreach>
+				
+		<async doc:name="Async" doc:id="9d134ac3-6d3c-4599-8ec8-2e58e138df2b">
+			<flow-ref doc:name="sendEmailForNotMatchedRecords" doc:id="b0ab9e38-8336-400a-9eb0-52d1bd44593d" name="sendEmailForNotMatchedRecords" />
+		</async>
+		<logger level="INFO" doc:name="before sfdc query" doc:id="4cbf0ca7-2ed2-43ca-81d1-b81c404ef8f4" message="before sfdc query #[payload]" />
+				<salesforce:create-job-bulk-api-v2 objectType="Account" doc:name="Create job bulk api v 2" doc:id="ba6a61f9-09d4-4741-899c-e4387391a837" config-ref="Salesforce_Config" operation="update">
+				<reconnect frequency="3000" count="3" />
+				<salesforce:s-objects><![CDATA[#[vars.sfRequest]]]></salesforce:s-objects>
+			</salesforce:create-job-bulk-api-v2>
+		<!-- <try doc:name="Try" doc:id="4857a988-6446-47d8-8764-2c3760c9eae3">
+			<logger level="INFO" doc:name="before sfdc update" doc:id="8bc65795-e8cd-4136-ada5-87ec127f0bcd" message="before sfdc update #[payload]" />
+			<logger level="INFO" doc:name="after sfdc bulk update" doc:id="640abdfa-e7a7-4e75-b212-6db2314c7439" message="after sfdc bulk update #[payload] " />
+			<error-handler>
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1359761a-2781-41ae-a221-a08f45eeaf46">
+					<logger level="INFO" doc:name="before sfdc error notification" doc:id="fb63e96d-1093-4526-8729-73a2066d0f8a" message="after sfdc error notification #[payload]" />
+					<email:send doc:name="SFDC Aging file update Process Escalation" doc:id="2e489df0-a2f9-417d-87f5-08a790012edf" config-ref="AWS_Email_SMTP" fromAddress='arc_phss@redcross.org' subject="mulesoft  ${MULE_ENV} - SFDC Aging file update Process Error" toAddresses="#[(p('workflow.salesforce-ar-aging.email.distribution')) splitBy(&quot;,&quot;)]">
+						<reconnect frequency="3000" count="3" />
+						<email:body contentType="text/html">
+								</email:body>
+					</email:send>
+					<logger level="INFO" doc:name="after sfdc error notification" doc:id="924f6892-f7a9-4c98-84ec-41124d9c3a70" message="after sfdc error notification #[payload]" />
+				</on-error-propagate>
+				
+			</error-handler>
+		</try> -->
+		<logger level="INFO" doc:name="before sharepoint publish" doc:id="65eb319b-e116-4e04-968f-5b13d15e77aa" message="before sharepoint publish #[payload]"/>
+		<!-- <try doc:name="Try" doc:id="b4aa806c-ef61-4c01-bd4b-e129000cec39" >
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="368907b2-2044-444b-86bc-ea8eb8bc6d7e" >
+					<logger level="INFO" doc:name="before sharepoint error notification" doc:id="63e428cd-bfee-4bf2-b847-72f80ef61adf" message="before sharepoint error notification #[payload]"/>
+					<email:send doc:name="SFDC Aging file update Process Escalation" doc:id="cec01ee6-6b7f-4218-9f94-780bffeb5a9d" config-ref="AWS_Email_SMTP" fromAddress='arc_phss@redcross.org' subject="mulesoft  ${MULE_ENV} - Sharepoint Aging file  upload Process Error" toAddresses="#[(p('workflow.salesforce-ar-aging.email.distribution')) splitBy(&quot;,&quot;)]">
+						<reconnect frequency="3000" count="3" />
+						<email:body contentType="text/html">
+								</email:body>
+					</email:send>
+					<logger level="INFO" doc:name="after sharepoint error notification" doc:id="716ade84-64a4-4967-a7f9-d6c3c06e1cd5" message="after sharepoint error notification #[payload]" />
+				</on-error-propagate>
+			
+			</error-handler>
+		</try>
+ -->		<try doc:name="Try" doc:id="3937abfa-015d-4b86-9c72-54974e447858" >
+			<sharepoint:file-add doc:name="Sharepoint File add" doc:id="7e51a48e-ce6e-40b4-b08c-c09706cfefce" config-ref="Sharepoint_Sharepoint_online-agfiles" fileServerRelativeUrl="/teams/test-site-aging/TSARAging/Forms/AllItems.aspx">
+				<sharepoint:file-content-stream><![CDATA[#[vars.TSARAgRecord]]]></sharepoint:file-content-stream>
+			</sharepoint:file-add>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="74b5e90e-de35-436d-abec-ab841c5b0415" >
+					<logger level="INFO" doc:name="Logger" doc:id="777b6fab-3f4c-4fb4-a720-a62f049c6a53" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="after file added to sharepoint" doc:id="5157364b-e117-4200-b13f-396b2bdaae80" message="after file added to sharepoint #[payload]"/>
+		<async doc:name="Async" doc:id="341fe9d8-0afc-4ecc-85f2-48fcbaa74387">
+			<flow-ref doc:name="success email notification" doc:id="27c2bc0f-ea4e-4943-8237-9aa40c42519a" name="successNotificationEmail" />
+		</async>
+		<error-handler ref="api-error-handler" />
+	
+	</flow>
+	<sub-flow name="exract-matched-not-matched-records-sub-flow" doc:id="e7461364-53d6-48df-82f0-2d5acc4146b7">
+		<choice doc:name="Choice" doc:id="3c853029-8e90-4456-a0bd-3b4dc357c3fd" >
+			<when expression="#[sizeOf(vars.retriveSFID) &gt; 0]">
+						<ee:transform doc:name="source-target transformation" doc:id="52f169fa-e347-4fc4-bba9-3b1377c8617f">
+			<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+if(vars.matchNumber == "match1")
+payload filter (!(vars.retriveSFID."nk_billto_org_id__c" contains $.'Account Identifier' ))
+else
+payload filter (!(vars.retriveSFID."SABA_LMS_Code__c" contains $.'Saba/LMS Code' ))]]></ee:set-payload>
+
+			</ee:message>
+						<ee:variables>
+						<ee:set-variable variableName="sfRequest"><![CDATA[%dw 2.0
+output application/csv lineSeparator="\n"
+fun decideFilter(data) = if(vars.matchNumber == "match1")
+data filter ((vars.retriveSFID."nk_billto_org_id__c" contains $.'Account Identifier' ))
+else
+data filter ((vars.retriveSFID."SABA_LMS_Code__c" contains $.'Saba/LMS Code' ))
+---
+
+(vars.sfRequest default []) ++ (decideFilter(payload) map (payload01,index)-> {
+    "Id": if(vars.matchNumber == "match1") ((vars.retriveSFID filter ($.nk_billto_org_id__c contains payload01."Account Identifier"))[0].Id)
+    	  else ((vars.retriveSFID filter ($.SABA_LMS_Code__c contains payload01."Saba/LMS Code"))[0].Id),
+    REPORT_Total_AR__c: payload01."Total Outstanding",
+    REPORT_AR_0_30_Days__c: payload01."1-30 Days",
+	REPORT_AR_31_60_Days__c: payload01."31-60 Days",
+	REPORT_AR_61_90_Days__c: payload01."61-90 Days",
+	REPORT_AR_91_120_Days__c: payload01."91-120 Days",
+	REPORT_AR_121_150_Days__c: payload01."121-150 Days",
+	REPORT_AR_151_180_Days__c: payload01."151-180 Days",
+	REPORT_AR_180_Days__c: payload01.">180 Days",
+	REPORT_AR_Last_Report__c: payload01."Report Date",
+	AR_Current__c:  payload01.Current,
+	CFS_Account_Number_1__c: payload01."CFS Account Number",
+	(Send_AR_Email__c: true) if((payload01."61-90 Days" default 0 replace "\$" with "") as Number >0)
+	
+} 
+)
+]]></ee:set-variable>
+						
+</ee:variables>
+		</ee:transform>
+				<ee:transform doc:name="NotMatched" doc:id="aed6a4a0-2a61-481e-862f-e4c0a5ca812b" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="notMatched" ><![CDATA[%dw 2.0
+output application/java
+---
+(vars.notMatched default []) ++ payload]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+					</when>
+				</choice>
+			
+
+	</sub-flow>
+</mule>

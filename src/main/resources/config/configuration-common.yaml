@@ -1,0 +1,39 @@
+smtpemail:
+  host: "email-smtp.us-east-1.amazonaws.com"
+  port: "587"
+  user: "AKIAIZJMN6SNBBZW563Q"
+  password: "![3KEy+6C42aRfBB8vG6Sviakuvi+oG779PelZzsc06Oh+cb17mTDp737PhmuS9FBO]"
+  emailSubject: "mulesoft  ${MULE_ENV} - SFTP TSORD file read Process fail" 
+  reconnection:
+    attempts: "3"
+    frequency: "6000"
+  toaddress: "milli.ketera@redcross.org"
+  severity: "Warning"
+  severitynm: "Not matched record found notification"
+  severitys: "Successful call notification"
+  subject: " mulesoft  ${MULE_ENV} - SFTP-SFDC_Sharepoint integration Process error with transaction reference ids: "
+  subject1: " mulesoft  ${MULE_ENV} - SFTP-SFDC integration Process Not matched Records with transaction reference ids: "
+  subject2: " ARAging File successfully posted into salesforce and SharePoint with transaction reference ids: "
+  replyTo: ""
+  cc: ""
+  bcc: ""
+  bodyType: "text/html"
+  tableCss: "table,td,th{border:1px solid #000;border-collapse:collapse}td,th{padding:5px;text-align:left}"
+  body:
+    sourceSystem: "SFTP"
+    targetSystem: "SFDC"
+    logUrl: "https://anypoint.mulesoft.com/monitoring/#/logs"
+    triggerUrl: "https://anypoint.mulesoft.com/exchange/915d445c-917a-4e6f-8a47-b86b2c431e06/sap-creditmemo-sys-api/"
+
+workflow:
+  salesforce-ar-aging:
+     email.distribution: "milli.ketera@redcross.org, milli.ketera@redcross.org" 
+  scheduler:
+    ecom:
+      interval: "0 10 6 ? * *"
+      timezone: "America/New_York"
+    ts:
+      interval: "0 10 3 ? * *"
+      timezone: "America/New_York"      
+  
+  

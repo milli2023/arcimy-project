@@ -1,0 +1,11 @@
+%dw 2.0
+
+type auto_e7461364_53d6_48df_82f0_2d5acc4146b7_Output_Variables_retriveSFID = Array<Account>
+type Account = {|
+  Id?: String {"typeId": "Id"}, 
+  SF_Account_Number__c?: String {"typeId": "SF_Account_Number__c"}
+|} {"label": "Account",
+"typeId": "Account"}
+
+
+

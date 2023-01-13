@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:sharepoint="http://www.mulesoft.org/schema/mule/sharepoint"
+	xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd 
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd 
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd 
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/sharepoint http://www.mulesoft.org/schema/mule/sharepoint/current/mule-sharepoint.xsd">
+	<!--  
+   	<email:smtp-config name="Gmail_Email_SMTP" doc:name="Email SMTP" doc:id="e1bf83b5-75ab-477f-aa62-c555c2ef4b5c" >
+			<email:smtps-connection host="smtp.gmail.com" password="vypxxmdrrcbyitzj" user="johnnyangelnj@gmail.com">
+	        <tls:context enabledProtocols="TLSv1.1, TLSv1.2">
+	            <tls:trust-store insecure="true"/>
+	        </tls:context>
+    	</email:smtps-connection>
+	</email:smtp-config>
+	-->
+
+	
+	<email:smtp-config name="AWS_Email_SMTP" doc:name="Email SMTP" doc:id="46c2a1db-b3d3-4ab0-b5c9-5f9a6cbf1674" >
+		<email:smtp-connection host="${smtpemail.host}" port="${smtpemail.port}" user="${smtpemail.user}" password="${secure::smtpemail.password}" />
+	</email:smtp-config>
+	
+    <configuration-properties doc:name="Configuration properties" doc:id="99a9d858-d7a3-4eff-8080-50314944444e" file="config/configuration-common.yaml" />
+	<secure-properties:config name="Secure_Properties_Config_common" doc:name="Secure Properties Config" doc:id="e699d9a5-fbab-49b8-b5d3-cb20a8479c94" file="config/configuration-common.yaml" key="${MULE_SECURE_PROPERTIES_KEY}" />
+	<configuration-properties doc:name="Configuration properties" doc:id="386b56cc-ba1c-429a-9fc3-3c41053263d2" file="config/configuration-${MULE_ENV}.yaml" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="31f12664-aba8-40eb-b68f-b92de4a6274d" file="config/configuration-${MULE_ENV}.yaml" key="${MULE_SECURE_PROPERTIES_KEY}" />
+	
+   <salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="9cb8b949-1fea-4a7a-a8a4-dad0d7470224" >
+		<salesforce:oauth-user-pass-connection consumerKey="${secure::salesforce.consumerkey}"
+		 consumerSecret="${secure::salesforce.consumersecret}"
+		 username="${salesforce.username}" password="${secure::salesforce.password}" tokenEndpoint="${salesforce.token.url}" securityToken="${secure::salesforce.securitytoken}"
+		 />
+	</salesforce:sfdc-config>
+	<sftp:config name="ECOM-SFTP_Config" doc:name="SFTP Config" doc:id="2ab1b467-0434-4c86-8ff4-df6c19664cba" >
+		<sftp:connection workingDir="/out" host="${ecom.sftp.host}" port="${ecom.sftp.port}" username="${ecom.sftp.username}" password="${ecom.sftp.password}"/>
+	</sftp:config>
+	<sftp:config name="TS_SFTP_Config" doc:name="SFTP Config" doc:id="e1773f2a-0981-4270-a78c-2eebcbed7534" >
+		<sftp:connection workingDir="/out" host="${ts.sftp.host}" port="${ts.sftp.port}" username="${ts.sftp.username}" password="${ts.sftp.password}" />
+	</sftp:config>
+	<sharepoint:sharepoint-online-config name="Sharepoint_Sharepoint_online-agfiles" doc:name="Sharepoint Sharepoint online" doc:id="d27fd3c1-cccc-4716-94a8-5e90c87be07a" >
+		<sharepoint:online-connection onlineUsername="${sharepoint.username}" onlinePassword="${secure::sharepoint.password}" siteUrl="${sharepoint.siteurl}" />
+	</sharepoint:sharepoint-online-config>
+	<global-property doc:name="Global Property" doc:id="45d1c5d4-9864-4262-a0ba-b74385d02f19" name="MULE_SECURE_PROPERTIES_KEY" value="mulesoft56913578" />
+	<global-property doc:name="Global Property" doc:id="20335f0e-4c8f-41e5-9495-75e9a549d078" name="MULE_ENV" value="local" />
+  	<global-property doc:name="Global Property" doc:id="349bff5e-7aec-431b-81ee-0eead9a1df09" name="MULE_SECURE_PROPERTIES_KEY" value="placeholder12399" />
+	 
+
+<!--  
+	<db:config name="MySQL_Database_Config" doc:name="Database Config" doc:id="be81adaa-0a2e-4fde-ac9c-c4dd825a3022" >
+		<db:my-sql-connection host="localhost" port="3306" user="mulesoft" password="JohnnyMulesoft123!" database="arc" />
+	</db:config>
+-->
+	
+</mule>

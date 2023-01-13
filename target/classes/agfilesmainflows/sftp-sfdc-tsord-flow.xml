@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns:sharepoint="http://www.mulesoft.org/schema/mule/sharepoint"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sharepoint http://www.mulesoft.org/schema/mule/sharepoint/current/mule-sharepoint.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<flow name="sftp-sfdc-TSORD-flow" doc:id="cb067196-d6c1-4244-9c50-d083a86bfaf1" >
+		<!-- <try doc:name="Try" doc:id="34235219-16e0-4120-a5fe-aa52af924ed3" >
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="5535e841-8bbc-48d0-bccc-c9faceb8f948">
+					<logger level="INFO" doc:name="Copy_of_before sftp error notification" doc:id="13a7c93d-3160-4577-ae47-cc21e356e818" message="after sftp error notification #[payload]" />
+					<email:send doc:name="SFTP TSORD file update Process Escalation" doc:id="40f8e6eb-a433-4dec-a486-ef64c1808c4c" config-ref="AWS_Email_SMTP" fromAddress="arc_phss@redcross.org" subject="mulesoft  ${MULE_ENV} - SFTP TSORD file read Process fail" toAddresses="#[(p('workflow.salesforce-ar-aging.email.distribution')) splitBy(&quot;,&quot;)]" >
+						<reconnect frequency="3000" count="3" />
+						<email:body contentType="text/html" />
+					</email:send>
+					<logger level="INFO" doc:name="after sftp error notification" doc:id="673388b3-784c-4ba4-a3a7-f9b3e57793ff" message="after sftp error notification #[payload]" />
+				</on-error-propagate>
+			</error-handler>
+		</try> -->
+		<sftp:read doc:name="retrive TSORD file" doc:id="1b4711e8-3d58-4908-ad14-052b5455b298" config-ref="TS_SFTP_Config" path="TSORDS-20220427095053.csv" outputMimeType="application/csv">
+			<reconnect frequency="3000" count="3" />
+		</sftp:read>
+		<logger level="INFO" doc:name="after sftp retrive" doc:id="d5be6dcc-1234-4069-a1d6-6275bb80f319" message="after sftp retrive #[payload]" />
+		<set-variable value="#[payload]" doc:name="TSORD-Record" doc:id="981a9665-ed33-4765-a5b0-9979728fa547" variableName="tsordRecord"/>
+		<ee:transform doc:name="source-target transformation" doc:id="4abe29b2-6cc0-4c42-b385-f671b4a9cc60">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/csv lineSeparator="\n"
+---
+payload map ( payload1 , index ) ->{
+	CC_Order__c: payload1."CC Order",
+	CFS_InvoiceCredit__c: payload1."CFS Invoice/Credit",
+	Invoice_Amount__c: payload1."Invoice Amount",
+	Invoice_Date__c: payload1."Invoice Date" as Date,
+	SFDC_Account__c: payload1."SFDC Account",
+	Status__c: payload1.Status
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="flowName" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.fileName]]></ee:set-variable>
+			</ee:variables>
+		
+</ee:transform>
+					<logger level="INFO" doc:name="before sfdc bulk update" doc:id="8efc058b-cbe1-406e-9167-bcdf6f29fd28" message="before sfdc bulk update #[payload]" />
+		<salesforce:create-job-bulk-api-v2 doc:name="TSORD sfdc update" doc:id="7fc6a422-779b-4b2f-aa56-597785fbaa3a" config-ref="Salesforce_Config" objectType="Open_Order_Processing__c" operation="update">
+				<reconnect frequency="3000" count="3" />
+			</salesforce:create-job-bulk-api-v2>
+		<logger level="INFO" doc:name="after bulk update" doc:id="0b45b325-a89d-4932-872f-b00e4e65e2c6" message="after bulk update #[payload]" />
+		<!-- <try doc:name="Try" doc:id="5e98a093-9b6b-4cd5-8dea-c6a9e48c7c70">
+			<error-handler>
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="c5126e0b-e698-469d-af1c-36e78782c58e">
+					<logger level="INFO" doc:name="before sfdc error notification " doc:id="e28eebdb-5c43-443f-a4d1-fd74deab9c01" message="before sfdc error notification #[payload]" />
+					 <email:send doc:name="SFDC tsord file update Process Escalation" doc:id="e351a044-c7e1-47ef-b7f7-c03e3dd7215f" config-ref="AWS_Email_SMTP" fromAddress='arc_phss@redcross.org' subject="mulesoft  ${MULE_ENV} - SFDC Aging file update Process Error" toAddresses="#[(p('workflow.salesforce-ar-aging.email.distribution')) splitBy(&quot;,&quot;)]">
+						<reconnect frequency="3000" count="3" />
+						<email:body contentType="text/html">
+								</email:body>
+					</email:send>
+					<logger level="INFO" doc:name="after sfdc error notification" doc:id="04dd7338-050b-4c8c-9233-5e1c34f321ae" message="after sfdc error notification #[payload]" />
+				
+</on-error-propagate>
+			</error-handler>
+		</try>
+		 -->
+		<!-- <try doc:name="Try" doc:id="a9055cad-c09d-45a1-b6e7-7e070d14d21e" >
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="01a357d1-fb2f-49bb-960e-714e2d959580" type="ANY">
+					<logger level="INFO" doc:name="before sharepoint alert " doc:id="751def58-4bfe-4d98-8836-9b144bd372d1" message="before sharepoint alert #[payload]"/>
+					 <email:send doc:name="Sharepoint tsord file add process Escalation" doc:id="27fa82eb-fb28-4d80-b949-90b87cd73397" config-ref="AWS_Email_SMTP" fromAddress='arc_phss@redcross.org' subject="mulesoft  ${MULE_ENV} - Sharepoint tsord file upload Process Error" toAddresses="#[(p('workflow.salesforce-ar-aging.email.distribution')) splitBy(&quot;,&quot;)]">
+						<reconnect frequency="3000" count="3" />
+						<email:body contentType="text/html" >
+								</email:body>
+					</email:send>
+					<logger level="INFO" doc:name="after sharepoint alert " doc:id="85e0eb48-10ec-4788-8d57-902f4312cf56" message="after sharepoint alert #[payload]"/>
+				
+</on-error-propagate>
+			</error-handler>
+		</try> -->
+		<try doc:name="Try" doc:id="9ab6fdc5-038a-4eca-aae9-e70bbe4f3843" >
+			<sharepoint:file-add doc:name="sharepoint File add" doc:id="c407abfb-ce32-4b01-8b21-e998f60e9b11" fileServerRelativeUrl="/teams/test2foraging/tsord" overwrite="true" config-ref="Sharepoint_Sharepoint_online-agfiles">
+					<sharepoint:file-content-stream><![CDATA[#[payload]]]></sharepoint:file-content-stream>
+				</sharepoint:file-add>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="021e6999-5d94-4df5-b7e4-07a2cbc0433a" >
+					<logger level="INFO" doc:name="Logger" doc:id="b4435879-c1bb-494c-bf5c-04379de2b118" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="after sharepoint update" doc:id="3fe53f92-b3a0-40eb-8d5c-42fe6b82ac36" message="after sharepoint update #[payload]"/>
+		<async doc:name="Async" doc:id="294c0a41-9e6f-41fa-9b20-fc335af7d97f">
+			<flow-ref doc:name="success email notification" doc:id="4a0be5c4-fe89-489f-b154-72e4882f95fb" name="successNotificationEmail" />
+		
+</async>
+		<error-handler ref="api-error-handler" />
+	
+</flow>
+	
+</mule>
